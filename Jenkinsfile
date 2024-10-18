@@ -70,12 +70,7 @@ pipeline {
                 }
             }
         }
-        stage('Run Automated Tests') {
-            steps {
-                // Add commands to run your automated tests here
-                // For example: Selenium tests or other API tests
-            }
-        }
+        
         stage('Promote to Production') {
             steps {
                 input message: 'Deploy to Production?', ok: 'Yes, deploy!'
@@ -91,10 +86,6 @@ pipeline {
                 }
             }
         }
-        stage('Setup Monitoring') {
-            steps {
-                // Run commands or scripts to set up monitoring with Prometheus and Grafana
-            }
-        }
+        
     }
 }
