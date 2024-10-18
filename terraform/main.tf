@@ -39,3 +39,4 @@ resource "aws_security_group" "finance_app_sg" {
 output "instance_ip" {
   value = aws_instance.finance_app.public_ip
 }
+

@@ -6,9 +6,9 @@ pipeline {
     }
 
     environment {
-        DOCKER_CREDENTIALS_ID = 'Docker' // Docker credentials ID
-        GIT_REPO_URL = 'https://github.com/Raj000007/BANKING-FINANCE.git' // GitHub repository URL
-        AWS_CREDENTIALS_ID = 'aws-credentials' // AWS credentials ID
+        DOCKER_CREDENTIALS_ID = 'Docker'
+        GIT_REPO_URL = 'https://github.com/Raj000007/BANKING-FINANCE.git'
+        AWS_CREDENTIALS_ID = 'aws-credentials'
         ANSIBLE_CREDENTIALS_ID = 'Ansible'
     }
 
@@ -44,47 +44,55 @@ pipeline {
             steps {
                 script {
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${AWS_CREDENTIALS_ID}"]]) {
-                        sh '''
-                            cd terraform/
-                            terraform init
-                            terraform apply -auto-approve
-                        '''
+                        ansiColor('xterm') {
+                            sh '''
+                                cd terraform/
+                                terraform init
+                                terraform apply -auto-approve -no-color
+                            '''
+                        }
                     }
                 }
             }
         }
 
-        stage('Create Ansible Inventory') {
+        stage('Get Instance IP') {
             steps {
                 script {
+                    // Capture the instance IP from Terraform output
                     def instance_ip = sh(
                         script: 'terraform output -raw instance_ip',
                         returnStdout: true
                     ).trim()
+                    
+                    if (!instance_ip) {
+                        error 'Instance IP could not be retrieved from Terraform output! Ensure the instance is created and outputs are defined.'
+                    }
+                    
                     env.INSTANCE_IP = instance_ip
-
-                    writeFile file: 'inventory.yml', text: """
-                    all:
-                      hosts:
-                        ${env.INSTANCE_IP}:
-                          ansible_user: ubuntu
-                          ansible_ssh_private_key_file: ~/.ssh/id_rsa.pub
-                    """
                 }
             }
         }
-                stage('Ansible Configuration') {
+
+        stage('Ansible Configuration') {
             steps {
                 script {
-                    withCredentials([sshUserPrivateKey(credentialsId: "${ANSIBLE_CREDENTIALS_ID}", keyFileVariable: 'SSH_KEY')]) {
-                        def version = "v${env.BUILD_NUMBER}"
-                        sh '''
-                            ansible-playbook -i inventory.yml --private-key ${SSH_KEY} \
-                            -e docker_image_version=${version} ansible/ansible-playbook.yml
-                        '''
+                    if (env.INSTANCE_IP) {
+                        // Run Ansible playbook using captured instance IP
+                        sh """
+                            ansible-playbook -i "${env.INSTANCE_IP}," --private-key ~/.ssh/finance.pem ansible/ansible-playbook.yml
+                        """
+                    } else {
+                        error "No instance IP available for Ansible playbook run."
                     }
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            cleanWs() // Clean workspace after pipeline run
         }
     }
 }
