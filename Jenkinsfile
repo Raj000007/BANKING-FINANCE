@@ -58,6 +58,9 @@ pipeline {
                 script {
                     // Run Ansible playbook to configure the test server
                     dir(ANSIBLE_DIR) {
+                        // Ensure dynamic_inventory.py has executable permissions
+                        sh 'chmod +x ../dynamic_inventory.py'
+                        // Run Ansible playbook
                         sh 'ansible-playbook -i ../dynamic_inventory.py deploy.yml'
                     }
                 }
@@ -68,8 +71,14 @@ pipeline {
                 script {
                     // Retrieve the test server IP from Terraform output
                     def serverIp = sh(script: "terraform output -raw test_server_ip", returnStdout: true).trim()
-                    // Deploy Docker image to the test server
-                    sh "ssh -o StrictHostKeyChecking=no ubuntu@${serverIp} 'docker run -d -p 8080:8080 ${DOCKER_IMAGE}'"
+                    
+                    // Check if the serverIp is empty or contains invalid characters
+                    if (serverIp) {
+                        // Deploy Docker image to the test server
+                        sh "ssh -o StrictHostKeyChecking=no ubuntu@${serverIp} 'docker run -d -p 8080:8080 ${DOCKER_IMAGE}'"
+                    } else {
+                        error "Failed to retrieve the test server IP."
+                    }
                 }
             }
         }
@@ -80,14 +89,24 @@ pipeline {
                 script {
                     // Run Ansible playbook to configure the production server
                     dir(ANSIBLE_DIR) {
+                        // Ensure dynamic_inventory.py has executable permissions
+                        sh 'chmod +x ../dynamic_inventory.py'
+                        // Run Ansible playbook for production
                         sh 'ansible-playbook -i ../dynamic_inventory.py production.yml'
                     }
                     // Retrieve the production server IP from Terraform output
                     def prodIp = sh(script: "terraform output -raw prod_server_ip", returnStdout: true).trim()
-                    // Deploy Docker image to the production server
-                    sh "ssh -o StrictHostKeyChecking=no ubuntu@${prodIp} 'docker run -d -p 8080:8080 ${DOCKER_IMAGE}'"
+                    
+                    // Check if the prodIp is empty or contains invalid characters
+                    if (prodIp) {
+                        // Deploy Docker image to the production server
+                        sh "ssh -o StrictHostKeyChecking=no ubuntu@${prodIp} 'docker run -d -p 8080:8080 ${DOCKER_IMAGE}'"
+                    } else {
+                        error "Failed to retrieve the production server IP."
+                    }
                 }
             }
         }
+        
     }
 }
