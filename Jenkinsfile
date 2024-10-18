@@ -73,6 +73,9 @@ pipeline {
                     def serverIp = sh(script: "terraform output -raw test_server_ip", returnStdout: true).trim()
                     echo "Test Server IP: ${serverIp}" // Debugging line
                     
+                    // Clean the IP address
+                    serverIp = serverIp.replaceAll("[^0-9.]", "").trim() // Strip any unwanted characters
+
                     // Check if the serverIp is empty or contains invalid characters
                     if (serverIp && serverIp.contains(".")) { // Ensure it contains a dot for a valid IP
                         // Deploy Docker image to the test server
@@ -99,6 +102,9 @@ pipeline {
                     def prodIp = sh(script: "terraform output -raw prod_server_ip", returnStdout: true).trim()
                     echo "Production Server IP: ${prodIp}" // Debugging line
                     
+                    // Clean the IP address
+                    prodIp = prodIp.replaceAll("[^0-9.]", "").trim() // Strip any unwanted characters
+
                     // Check if the prodIp is empty or contains invalid characters
                     if (prodIp && prodIp.contains(".")) { // Ensure it contains a dot for a valid IP
                         // Deploy Docker image to the production server
@@ -109,6 +115,5 @@ pipeline {
                 }
             }
         }
-        
     }
 }
