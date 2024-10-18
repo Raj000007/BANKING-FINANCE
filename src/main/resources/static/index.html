@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banking Application</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Banking Application</h1>
+    </header>
+    <main>
+        <section id="balance-check">
+            <h2>Check Account Balance</h2>
+            <form id="balanceForm">
+                <input type="text" id="accountNumber" placeholder="Account Number" required>
+                <input type="text" id="accountHolderName" placeholder="Account Holder Name" required>
+                <button type="submit">Check Balance</button>
+            </form>
+            <div id="balanceResult"></div>
+        </section>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>

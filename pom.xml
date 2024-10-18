@@ -83,7 +83,14 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
-
+            <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <version>3.2.0</version>
+            <configuration>
+                <finalName>${project.artifactId}-${project.version}</finalName>
+            </configuration>
+        </plugin>
             <!-- Maven Surefire Plugin: For running unit tests (JUnit) and TestNG -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
