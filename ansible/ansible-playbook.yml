@@ -21,7 +21,7 @@
     - name: Deploy Docker Container
       docker_container:
         name: finance_me
-        image: rajesh159951/finance:
+        image: "rajesh159951/finance:{{ docker_image_version }}"
         state: started
         restart_policy: always
         published_ports:

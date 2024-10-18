@@ -62,25 +62,25 @@ pipeline {
                         returnStdout: true
                     ).trim()
                     env.INSTANCE_IP = instance_ip
-                    
-                    // Create the inventory.yml file dynamically
+
                     writeFile file: 'inventory.yml', text: """
                     all:
                       hosts:
                         ${env.INSTANCE_IP}:
                           ansible_user: ubuntu
-                          ansible_ssh_private_key_file: ~/.ssh/finance.pem
+                          ansible_ssh_private_key_file: ~/.ssh/id_rsa.pub
                     """
                 }
             }
         }
-
-        stage('Ansible Configuration') {
+                stage('Ansible Configuration') {
             steps {
                 script {
                     withCredentials([sshUserPrivateKey(credentialsId: "${ANSIBLE_CREDENTIALS_ID}", keyFileVariable: 'SSH_KEY')]) {
+                        def version = "v${env.BUILD_NUMBER}"
                         sh '''
-                            ansible-playbook -i inventory.yml --private-key ${SSH_KEY} ansible/ansible-playbook.yml
+                            ansible-playbook -i inventory.yml --private-key ${SSH_KEY} \
+                            -e docker_image_version=${version} ansible/ansible-playbook.yml
                         '''
                     }
                 }
