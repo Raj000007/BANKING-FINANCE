@@ -16,12 +16,8 @@ pipeline {
         }
         stage('Build and Test') {
             steps {
-                script {
-                    // Build the Maven project
-                    sh 'mvn clean package'
-                    // Run unit tests
-                    sh 'mvn test'
-                }
+                sh 'mvn clean package'  // Build the Maven project
+                sh 'mvn test'  // Run unit tests
             }
         }
         stage('Docker Build') {
@@ -61,11 +57,10 @@ pipeline {
             steps {
                 script {
                     dir(ANSIBLE_DIR) {
+                        // Make sure to use the new inventory file
                         sh 'chmod +x dynamic_inventory.py'
-                        // Retry running Ansible playbook if it fails
-                        retry(3) {
-                            sh 'ansible-playbook -i dynamic_inventory.py deploy.yml'
-                        }
+                        // Run Ansible playbook using the inventory file
+                        sh 'ansible-playbook -i inventory.ini deploy.yml'
                     }
                 }
             }
@@ -73,8 +68,8 @@ pipeline {
         stage('Deploy to Test Server') {
             steps {
                 script {
-                    // Use the manually set IP instead of dynamic output
-                    def serverIp = "54.198.212.8" // Set test server IP manually
+                    // Manually retrieve the test server IP address
+                    def serverIp = "54.198.212.8"  // Test server IP
                     // Deploy Docker image to the test server
                     sh "ssh -o StrictHostKeyChecking=no ubuntu@${serverIp} 'docker run -d -p 8080:8080 ${DOCKER_IMAGE}'"
                 }
@@ -85,14 +80,11 @@ pipeline {
                 input message: 'Deploy to Production?', ok: 'Yes, deploy!'
                 script {
                     dir(ANSIBLE_DIR) {
-                        sh 'chmod +x dynamic_inventory.py'
-                        // Retry running Ansible playbook if it fails
-                        retry(3) {
-                            sh 'ansible-playbook -i dynamic_inventory.py production.yml'
-                        }
+                        // Run Ansible playbook for production
+                        sh 'ansible-playbook -i inventory.ini production.yml'
                     }
-                    // Use the manually set IP instead of dynamic output
-                    def prodIp = "54.237.251.49" // Set production server IP manually
+                    // Manually retrieve the production server IP address
+                    def prodIp = "54.237.251.49"  // Production server IP
                     // Deploy Docker image to the production server
                     sh "ssh -o StrictHostKeyChecking=no ubuntu@${prodIp} 'docker run -d -p 8080:8080 ${DOCKER_IMAGE}'"
                 }
