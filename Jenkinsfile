@@ -1,98 +1,67 @@
 pipeline {
     agent any
-
-    tools {
-        maven 'MAVEN_HOME'
-    }
-
-    environment {
-        DOCKER_CREDENTIALS_ID = 'Docker'
-        GIT_REPO_URL = 'https://github.com/Raj000007/BANKING-FINANCE.git'
-        AWS_CREDENTIALS_ID = 'aws-credentials'
-        ANSIBLE_CREDENTIALS_ID = 'Ansible'
-    }
-
     stages {
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
-                git branch: 'main', url: "${GIT_REPO_URL}"
+                git url: 'https://github.com/Raj000007/BANKING-FINANCE.git', branch: 'main'
             }
         }
-
-        stage('Build') {
+        stage('Build and Test') {
+            steps {
+                sh 'mvn clean package'  
+                sh 'mvn test'
+            }
+        }
+        stage('Docker Build') {
             steps {
                 script {
-                    def version = "v${env.BUILD_NUMBER}"
-                    sh "mvn clean package -Dversion=${version}"
+                    def imageName = "rajesh159951/finance:${env.BUILD_ID}"
+                    sh "docker build -t ${imageName} ."
                 }
             }
         }
-
-        stage('Docker Build and Push') {
+        stage('Provision Test Server') {
             steps {
                 script {
-                    def version = "v${env.BUILD_NUMBER}"
-                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIALS_ID}") {
-                        sh "docker build -t rajesh159951/finance:${version} ."
-                        sh "docker push rajesh159951/finance:${version}"
-                    }
+                    sh 'terraform init'
+                    sh 'terraform apply -auto-approve'
                 }
             }
         }
-
-        stage('Terraform Init and Apply') {
+        stage('Configure Test Server') {
             steps {
                 script {
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${AWS_CREDENTIALS_ID}"]]) {
-                        ansiColor('xterm') {
-                            sh '''
-                                cd terraform/
-                                terraform init
-                                terraform apply -auto-approve -no-color
-                            '''
-                        }
-                    }
+                    sh 'ansible-playbook -i dynamic_inventory.py deploy.yml'
                 }
             }
         }
-
-        stage('Get Instance IP') {
+        stage('Deploy to Test Server') {
             steps {
                 script {
-                    // Capture the instance IP from Terraform output
-                    def instance_ip = sh(
-                        script: 'terraform output -raw instance_ip',
-                        returnStdout: true
-                    ).trim()
-                    
-                    if (!instance_ip) {
-                        error 'Instance IP could not be retrieved from Terraform output! Ensure the instance is created and outputs are defined.'
-                    }
-                    
-                    env.INSTANCE_IP = instance_ip
+                    def serverIp = sh(script: "terraform output test_server_ip", returnStdout: true).trim()
+                    sh "ssh -o StrictHostKeyChecking=no ubuntu@${serverIp} 'docker run -d -p 8080:8080 your-image-name:${env.BUILD_ID}'"
                 }
             }
         }
-
-        stage('Ansible Configuration') {
+        stage('Run Automated Tests') {
             steps {
+                // Add commands to run your automated tests here
+            }
+        }
+        stage('Promote to Production') {
+            steps {
+                input 'Deploy to Production?'
                 script {
-                    if (env.INSTANCE_IP) {
-                        // Run Ansible playbook using captured instance IP
-                        sh """
-                            ansible-playbook -i "${env.INSTANCE_IP}," --private-key ~/.ssh/finance.pem ansible/ansible-playbook.yml
-                        """
-                    } else {
-                        error "No instance IP available for Ansible playbook run."
-                    }
+                    sh 'ansible-playbook -i dynamic_inventory.py production.yml'
+                    def prodIp = sh(script: "terraform output prod_server_ip", returnStdout: true).trim()
+                    sh "ssh -o StrictHostKeyChecking=no ubuntu@${prodIp} 'docker run -d -p 8080:8080 your-image-name:${env.BUILD_ID}'"
                 }
             }
         }
-    }
-
-    post {
-        always {
-            cleanWs() // Clean workspace after pipeline run
+        stage('Setup Monitoring') {
+            steps {
+                // Run Prometheus and Grafana setup scripts or commands
+            }
         }
     }
 }
