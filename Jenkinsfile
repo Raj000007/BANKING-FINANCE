@@ -62,8 +62,10 @@ pipeline {
                 script {
                     dir(ANSIBLE_DIR) {
                         sh 'chmod +x dynamic_inventory.py'
-                        // Run Ansible playbook
-                        sh 'ansible-playbook -i dynamic_inventory.py deploy.yml'
+                        // Retry running Ansible playbook if it fails
+                        retry(3) {
+                            sh 'ansible-playbook -i dynamic_inventory.py deploy.yml'
+                        }
                     }
                 }
             }
@@ -71,10 +73,6 @@ pipeline {
         stage('Deploy to Test Server') {
             steps {
                 script {
-                    // Retrieve the test server IP from Terraform output
-                    def output = sh(script: "terraform output -json", returnStdout: true).trim()
-                    def jsonOutput = readJSON text: output
-
                     // Use the manually set IP instead of dynamic output
                     def serverIp = "54.198.212.8" // Set test server IP manually
                     // Deploy Docker image to the test server
@@ -88,13 +86,11 @@ pipeline {
                 script {
                     dir(ANSIBLE_DIR) {
                         sh 'chmod +x dynamic_inventory.py'
-                        // Run Ansible playbook for production
-                        sh 'ansible-playbook -i dynamic_inventory.py production.yml'
+                        // Retry running Ansible playbook if it fails
+                        retry(3) {
+                            sh 'ansible-playbook -i dynamic_inventory.py production.yml'
+                        }
                     }
-                    // Retrieve the production server IP from Terraform output
-                    def output = sh(script: "terraform output -json", returnStdout: true).trim()
-                    def jsonOutput = readJSON text: output
-
                     // Use the manually set IP instead of dynamic output
                     def prodIp = "54.237.251.49" // Set production server IP manually
                     // Deploy Docker image to the production server
