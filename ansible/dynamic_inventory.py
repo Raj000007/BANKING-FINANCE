@@ -1,23 +1,19 @@
 #!/usr/bin/env python
 
 import json
-import subprocess
 
 def main():
-    # Get the output from Terraform
-    tf_output = json.loads(subprocess.check_output(['terraform', 'output', '-json']).decode('utf-8'))
-
-    # Construct the inventory structure
+    # Manually set the IP addresses for the servers
     inventory = {
         'test': {
-            'hosts': [tf_output['test_server_ip']['value']],
+            'hosts': ['54.198.212.8'],  # Test server IP
         },
         'production': {
-            'hosts': [tf_output['prod_server_ip']['value']],
+            'hosts': ['54.237.251.49'],  # Production server IP
         },
     }
 
-    # Print the inventory in the required format
+    # Print the inventory in JSON format
     print(json.dumps(inventory))
 
 if __name__ == '__main__':
