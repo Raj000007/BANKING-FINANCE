@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 resource "aws_instance" "finance_app" {
-  ami           = "ami-0c55b159cbfafe1f0"  # Change this to a valid AMI ID for your region
+  ami           = "ami-005fc0f236362e99f"  # Change this to a valid AMI ID for your region
   instance_type = "t2.micro"               # Change instance type as needed
 
   tags = {
@@ -19,27 +19,20 @@ resource "aws_instance" "finance_app" {
 
 resource "aws_security_group" "finance_app_sg" {
   name        = "finance_app_sg"
-  description = "Allow traffic for finance application"
+  description = "Allow all inbound traffic for finance application"
 
   ingress {
-    from_port   = 8084      # Allow traffic on port 8084 (update as needed)
-    to_port     = 8084
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Allow from anywhere (consider tightening this for production)
-  }
-
-  ingress {
-    from_port   = 22         # Allow SSH access
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Allow from anywhere (consider tightening this for production)
+    from_port   = 0          # Allow all inbound ports
+    to_port     = 0          # Allow all inbound ports
+    protocol    = "-1"       # Allow all protocols
+    cidr_blocks = ["0.0.0.0/0"]  # Allow from anywhere (0.0.0.0/0)
   }
 
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"  # Allow all outbound traffic
-    cidr_blocks  = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
