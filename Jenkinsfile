@@ -59,9 +59,9 @@ pipeline {
                     // Run Ansible playbook to configure the test server
                     dir(ANSIBLE_DIR) {
                         // Ensure dynamic_inventory.py has executable permissions
-                        sh 'chmod +x ../dynamic_inventory.py'
+                        sh 'chmod +x dynamic_inventory.py'
                         // Run Ansible playbook
-                        sh 'ansible-playbook -i ../dynamic_inventory.py deploy.yml'
+                        sh 'ansible-playbook -i dynamic_inventory.py deploy.yml'
                     }
                 }
             }
@@ -90,9 +90,9 @@ pipeline {
                     // Run Ansible playbook to configure the production server
                     dir(ANSIBLE_DIR) {
                         // Ensure dynamic_inventory.py has executable permissions
-                        sh 'chmod +x ../dynamic_inventory.py'
+                        sh 'chmod +x dynamic_inventory.py'
                         // Run Ansible playbook for production
-                        sh 'ansible-playbook -i ../dynamic_inventory.py production.yml'
+                        sh 'ansible-playbook -i dynamic_inventory.py production.yml'
                     }
                     // Retrieve the production server IP from Terraform output
                     def prodIp = sh(script: "terraform output -raw prod_server_ip", returnStdout: true).trim()
