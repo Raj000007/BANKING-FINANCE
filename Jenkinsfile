@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    tools {
+        maven 'MAVEN_HOME' // Specify the Maven installation configured in Jenkins
+    }
     environment {
         TF_DIR = 'terraform' // Directory where your main.tf is located
         ANSIBLE_DIR = 'ansible' // Directory where your Ansible files are located
@@ -86,6 +89,5 @@ pipeline {
                 }
             }
         }
-        
     }
 }
