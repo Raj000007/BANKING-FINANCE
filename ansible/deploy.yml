@@ -1,19 +1,14 @@
 - hosts: test
   tasks:
-    - name: Update apt repository and install Docker
+    - name: Ensure Docker is installed
       apt:
-        update_cache: yes
         name: docker.io
         state: present
 
-    - name: Start and enable Docker
-      systemd:
-        name: docker
+    - name: Run Docker container
+      docker_container:
+        name: finance
+        image: rajesh159951/finance:latest
         state: started
-        enabled: yes
-
-    - name: Add user to Docker group
-      user:
-        name: ubuntu
-        group: docker
-        append: yes
+        ports:
+          - "8080:8080"
