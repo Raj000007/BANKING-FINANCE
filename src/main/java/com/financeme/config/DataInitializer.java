@@ -2,22 +2,23 @@ package com.financeme.config;
 
 import com.financeme.model.Account;
 import com.financeme.repository.AccountRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-@Component
-public class DataInitializer implements CommandLineRunner {
-    private final AccountRepository accountRepository;
+@Configuration
+public class DataInitializer {
 
-    public DataInitializer(AccountRepository accountRepository) {
-        this.accountRepository = accountRepository;
-    }
+    @Autowired
+    private AccountRepository accountRepository;
 
-    @Override
-    public void run(String... args) {
-        // Make sure these account numbers are unique
-        accountRepository.save(new Account("ACC001", "John Doe", 5000.00));
-        accountRepository.save(new Account("ACC002", "Jane Smith", 3000.00));
-        // Add more accounts as needed
+    @Bean
+    CommandLineRunner initDatabase() {
+        return args -> {
+            accountRepository.save(new Account("1001", "John Doe", 5000.00));
+            accountRepository.save(new Account("1002", "Jane Smith", 3000.00));
+            accountRepository.save(new Account("1003", "Alice Brown", 12000.00));
+        };
     }
 }

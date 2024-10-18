@@ -15,31 +15,26 @@ public class AccountController {
     @Autowired
     private AccountService accountService;
 
-    @PostMapping("/createAccount")
+    @GetMapping
+    public List<Account> getAllAccounts() {
+        return accountService.getAllAccounts();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Account> getAccountById(@PathVariable Long id) {
+        return accountService.getAccountById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
     public Account createAccount(@RequestBody Account account) {
         return accountService.createAccount(account);
     }
 
-    @PutMapping("/updateAccount/{accountNumber}")
-    public ResponseEntity<Account> updateAccount(@PathVariable String accountNumber, @RequestBody Account accountDetails) {
-        Account updatedAccount = accountService.updateAccount(accountNumber, accountDetails);
-        return updatedAccount != null ? ResponseEntity.ok(updatedAccount) : ResponseEntity.notFound().build();
-    }
-
-    @GetMapping("/viewAccount/{accountNumber}")
-    public ResponseEntity<Account> viewAccount(@PathVariable String accountNumber) {
-        Account account = accountService.viewAccount(accountNumber);
-        return account != null ? ResponseEntity.ok(account) : ResponseEntity.notFound().build();
-    }
-
-    @DeleteMapping("/deleteAccount/{accountNumber}")
-    public ResponseEntity<Void> deleteAccount(@PathVariable String accountNumber) {
-        accountService.deleteAccount(accountNumber);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteAccount(@PathVariable Long id) {
+        accountService.deleteAccount(id);
         return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/getAllAccounts")
-    public List<Account> getAllAccounts() {
-        return accountService.getAllAccounts();
     }
 }
