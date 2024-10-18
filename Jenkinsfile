@@ -2,20 +2,19 @@ pipeline {
     agent any
 
     tools {
-        maven 'MAVEN_HOME' // The name configured in Jenkins for Maven installation
+        maven 'MAVEN_HOME'
     }
 
     environment {
-        DOCKER_CREDENTIALS_ID = 'Docker' // Your Docker credentials ID
-        GIT_REPO_URL = 'https://github.com/Raj000007/BANKING-FINANCE.git' // Your GitHub repository URL
-        AWS_CREDENTIALS_ID = 'aws_credentials' // Your AWS credentials ID (for Terraform)
-        ANSIBLE_CREDENTIALS_ID = 'ansible_ssh' // Ansible credentials ID
+        DOCKER_CREDENTIALS_ID = 'Docker' // Docker credentials ID
+        GIT_REPO_URL = 'https://github.com/Raj000007/BANKING-FINANCE.git' // GitHub repository URL
+        AWS_CREDENTIALS_ID = 'aws-credentials' // AWS credentials ID
+        ANSIBLE_CREDENTIALS_ID = 'Ansible'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Checkout code from GitHub
                 git branch: 'main', url: "${GIT_REPO_URL}"
             }
         }
@@ -23,8 +22,7 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    // Generate a version number based on the build number
-                    def version = "v${env.BUILD_NUMBER}" 
+                    def version = "v${env.BUILD_NUMBER}"
                     sh "mvn clean package -Dversion=${version}"
                 }
             }
@@ -35,13 +33,8 @@ pipeline {
                 script {
                     def version = "v${env.BUILD_NUMBER}"
                     docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIALS_ID}") {
-                        // Build the Docker image with versioning
                         sh "docker build -t rajesh159951/finance:${version} ."
-                        // Push the Docker image to Docker Hub with version tag
                         sh "docker push rajesh159951/finance:${version}"
-                        // Also tag as "latest"
-                        sh "docker tag rajesh159951/finance:${version} rajesh159951/finance:latest"
-                        sh "docker push rajesh159951/finance:latest"
                     }
                 }
             }
@@ -61,6 +54,37 @@ pipeline {
             }
         }
 
-     
+        stage('Create Ansible Inventory') {
+            steps {
+                script {
+                    def instance_ip = sh(
+                        script: 'terraform output -raw instance_ip',
+                        returnStdout: true
+                    ).trim()
+                    env.INSTANCE_IP = instance_ip
+                    
+                    // Create the inventory.yml file dynamically
+                    writeFile file: 'inventory.yml', text: """
+                    all:
+                      hosts:
+                        ${env.INSTANCE_IP}:
+                          ansible_user: ubuntu
+                          ansible_ssh_private_key_file: ~/.ssh/finance.pem
+                    """
+                }
+            }
+        }
+
+        stage('Ansible Configuration') {
+            steps {
+                script {
+                    withCredentials([sshUserPrivateKey(credentialsId: "${ANSIBLE_CREDENTIALS_ID}", keyFileVariable: 'SSH_KEY')]) {
+                        sh '''
+                            ansible-playbook -i inventory.yml --private-key ${SSH_KEY} ansible/ansible-playbook.yml
+                        '''
+                    }
+                }
+            }
+        }
     }
 }
