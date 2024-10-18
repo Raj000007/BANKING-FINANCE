@@ -47,7 +47,7 @@ pipeline {
                         dir(TF_DIR) {
                             // Initialize Terraform and apply configuration to provision servers
                             sh 'terraform init'
-                            sh 'terraform apply -auto-approve -no-color'
+                            sh 'terraform apply -auto-approve'
                         }
                     }
                 }
@@ -71,13 +71,14 @@ pipeline {
                 script {
                     // Retrieve the test server IP from Terraform output
                     def serverIp = sh(script: "terraform output -raw test_server_ip", returnStdout: true).trim()
+                    echo "Test Server IP: ${serverIp}" // Debugging line
                     
                     // Check if the serverIp is empty or contains invalid characters
-                    if (serverIp) {
+                    if (serverIp && serverIp.contains(".")) { // Ensure it contains a dot for a valid IP
                         // Deploy Docker image to the test server
                         sh "ssh -o StrictHostKeyChecking=no ubuntu@${serverIp} 'docker run -d -p 8080:8080 ${DOCKER_IMAGE}'"
                     } else {
-                        error "Failed to retrieve the test server IP."
+                        error "Failed to retrieve a valid test server IP: ${serverIp}."
                     }
                 }
             }
@@ -96,13 +97,14 @@ pipeline {
                     }
                     // Retrieve the production server IP from Terraform output
                     def prodIp = sh(script: "terraform output -raw prod_server_ip", returnStdout: true).trim()
+                    echo "Production Server IP: ${prodIp}" // Debugging line
                     
                     // Check if the prodIp is empty or contains invalid characters
-                    if (prodIp) {
+                    if (prodIp && prodIp.contains(".")) { // Ensure it contains a dot for a valid IP
                         // Deploy Docker image to the production server
                         sh "ssh -o StrictHostKeyChecking=no ubuntu@${prodIp} 'docker run -d -p 8080:8080 ${DOCKER_IMAGE}'"
                     } else {
-                        error "Failed to retrieve the production server IP."
+                        error "Failed to retrieve a valid production server IP: ${prodIp}."
                     }
                 }
             }
