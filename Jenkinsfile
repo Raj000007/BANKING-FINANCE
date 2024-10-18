@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    tools {
+        maven 'MAVEN_HOME' // Specify the Maven installation configured in Jenkins
+    }
     environment {
         TF_DIR = 'terraform' // Directory where your main.tf is located
         ANSIBLE_DIR = 'ansible' // Directory where your Ansible files are located
@@ -13,8 +16,12 @@ pipeline {
         }
         stage('Build and Test') {
             steps {
-                sh 'mvn clean package'  // Build the Maven project
-                sh 'mvn test'  // Run unit tests
+                script {
+                    // Build the Maven project
+                    sh 'mvn clean package'
+                    // Run unit tests
+                    sh 'mvn test'
+                }
             }
         }
         stage('Docker Build') {
@@ -53,10 +60,9 @@ pipeline {
         stage('Configure Test Server with Ansible') {
             steps {
                 script {
-                    // Run Ansible playbook to configure the test server
                     dir(ANSIBLE_DIR) {
-                        // Make sure the dynamic inventory script is executable
                         sh 'chmod +x dynamic_inventory.py'
+                        // Run Ansible playbook
                         sh 'ansible-playbook -i dynamic_inventory.py deploy.yml'
                     }
                 }
@@ -65,25 +71,36 @@ pipeline {
         stage('Deploy to Test Server') {
             steps {
                 script {
+                    // Retrieve the test server IP from Terraform output
+                    def output = sh(script: "terraform output -json", returnStdout: true).trim()
+                    def jsonOutput = readJSON text: output
+
+                    // Use the manually set IP instead of dynamic output
+                    def serverIp = "54.198.212.8" // Set test server IP manually
                     // Deploy Docker image to the test server
-                    sh "ssh -o StrictHostKeyChecking=no ubuntu@54.198.212.8 'docker run -d -p 8080:8080 ${DOCKER_IMAGE}'"
+                    sh "ssh -o StrictHostKeyChecking=no ubuntu@${serverIp} 'docker run -d -p 8080:8080 ${DOCKER_IMAGE}'"
                 }
             }
         }
-        
         stage('Promote to Production') {
             steps {
                 input message: 'Deploy to Production?', ok: 'Yes, deploy!'
                 script {
-                    // Run Ansible playbook to configure the production server
                     dir(ANSIBLE_DIR) {
+                        sh 'chmod +x dynamic_inventory.py'
+                        // Run Ansible playbook for production
                         sh 'ansible-playbook -i dynamic_inventory.py production.yml'
                     }
+                    // Retrieve the production server IP from Terraform output
+                    def output = sh(script: "terraform output -json", returnStdout: true).trim()
+                    def jsonOutput = readJSON text: output
+
+                    // Use the manually set IP instead of dynamic output
+                    def prodIp = "54.237.251.49" // Set production server IP manually
                     // Deploy Docker image to the production server
-                    sh "ssh -o StrictHostKeyChecking=no ubuntu@54.237.251.49 'docker run -d -p 8080:8080 ${DOCKER_IMAGE}'"
+                    sh "ssh -o StrictHostKeyChecking=no ubuntu@${prodIp} 'docker run -d -p 8080:8080 ${DOCKER_IMAGE}'"
                 }
             }
         }
-        
     }
 }
