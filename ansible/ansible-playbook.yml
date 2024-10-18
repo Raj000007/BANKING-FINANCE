@@ -1,7 +1,9 @@
 - name: Configure Docker on EC2 Instances
   hosts: all
   become: true
-  connection: ssh
+  vars:
+    ansible_user: ubuntu  # Specify the correct user
+    docker_image_version: "latest"  # Replace with your desired version if needed
   tasks:
     - name: Update apt repository
       apt:
