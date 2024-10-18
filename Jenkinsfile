@@ -47,7 +47,7 @@ pipeline {
                         dir(TF_DIR) {
                             // Initialize Terraform and apply configuration to provision servers
                             sh 'terraform init'
-                            sh 'terraform apply -auto-approve'
+                            sh 'terraform apply -auto-approve -no-color'
                         }
                     }
                 }
