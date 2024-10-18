@@ -1,8 +1,11 @@
-# Use the official OpenJDK 17 base image
+# Use a base image
 FROM openjdk:17-jdk-slim
 
-# Copy the packaged jar file into the container
-COPY target/banking-finance-0.0.1-SNAPSHOT.jar banking-finance.jar
+# Set working directory
+WORKDIR /app
 
-# Specify the command to run the application
-ENTRYPOINT ["java", "-jar", "/banking-finance.jar"]
+# Copy the JAR file into the container
+COPY target/*.jar app.jar
+
+# Run the application
+ENTRYPOINT ["java", "-jar", "app.jar"]
