@@ -1,8 +1,5 @@
 pipeline {
     agent any
-    tools {
-        maven 'MAVEN_HOME' // Specify the Maven installation configured in Jenkins
-    }
     environment {
         TF_DIR = 'terraform' // Directory where your main.tf is located
         ANSIBLE_DIR = 'ansible' // Directory where your Ansible files are located
@@ -58,9 +55,8 @@ pipeline {
                 script {
                     // Run Ansible playbook to configure the test server
                     dir(ANSIBLE_DIR) {
-                        // Ensure dynamic_inventory.py has executable permissions
+                        // Make sure the dynamic inventory script is executable
                         sh 'chmod +x dynamic_inventory.py'
-                        // Run Ansible playbook
                         sh 'ansible-playbook -i dynamic_inventory.py deploy.yml'
                     }
                 }
@@ -69,20 +65,8 @@ pipeline {
         stage('Deploy to Test Server') {
             steps {
                 script {
-                    // Retrieve the test server IP from Terraform output
-                    def serverIp = sh(script: "terraform output -raw test_server_ip", returnStdout: true).trim()
-                    echo "Test Server IP: ${serverIp}" // Debugging line
-                    
-                    // Clean the IP address
-                    serverIp = serverIp.replaceAll("[^0-9.]", "").trim() // Strip any unwanted characters
-
-                    // Check if the serverIp is empty or contains invalid characters
-                    if (serverIp && serverIp.contains(".")) { // Ensure it contains a dot for a valid IP
-                        // Deploy Docker image to the test server
-                        sh "ssh -o StrictHostKeyChecking=no ubuntu@${serverIp} 'docker run -d -p 8080:8080 ${DOCKER_IMAGE}'"
-                    } else {
-                        error "Failed to retrieve a valid test server IP: ${serverIp}."
-                    }
+                    // Deploy Docker image to the test server
+                    sh "ssh -o StrictHostKeyChecking=no ubuntu@54.198.212.8 'docker run -d -p 8080:8080 ${DOCKER_IMAGE}'"
                 }
             }
         }
@@ -93,27 +77,13 @@ pipeline {
                 script {
                     // Run Ansible playbook to configure the production server
                     dir(ANSIBLE_DIR) {
-                        // Ensure dynamic_inventory.py has executable permissions
-                        sh 'chmod +x dynamic_inventory.py'
-                        // Run Ansible playbook for production
                         sh 'ansible-playbook -i dynamic_inventory.py production.yml'
                     }
-                    // Retrieve the production server IP from Terraform output
-                    def prodIp = sh(script: "terraform output -raw prod_server_ip", returnStdout: true).trim()
-                    echo "Production Server IP: ${prodIp}" // Debugging line
-                    
-                    // Clean the IP address
-                    prodIp = prodIp.replaceAll("[^0-9.]", "").trim() // Strip any unwanted characters
-
-                    // Check if the prodIp is empty or contains invalid characters
-                    if (prodIp && prodIp.contains(".")) { // Ensure it contains a dot for a valid IP
-                        // Deploy Docker image to the production server
-                        sh "ssh -o StrictHostKeyChecking=no ubuntu@${prodIp} 'docker run -d -p 8080:8080 ${DOCKER_IMAGE}'"
-                    } else {
-                        error "Failed to retrieve a valid production server IP: ${prodIp}."
-                    }
+                    // Deploy Docker image to the production server
+                    sh "ssh -o StrictHostKeyChecking=no ubuntu@54.237.251.49 'docker run -d -p 8080:8080 ${DOCKER_IMAGE}'"
                 }
             }
         }
+        
     }
 }
