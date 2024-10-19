@@ -14,6 +14,11 @@ pipeline {
                 git url: 'https://github.com/Raj000007/BANKING-FINANCE.git', branch: 'main'
             }
         }
+        stage('Print Current User') {
+            steps {
+                sh 'whoami'
+            }
+        }
         stage('Build and Test') {
             steps {
                 sh 'mvn clean package'  // Build the Maven project
