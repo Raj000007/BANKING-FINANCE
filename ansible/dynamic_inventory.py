@@ -10,7 +10,7 @@ def main():
             "hosts": ["54.198.212.8"],  # Your target host
             "vars": {
                 "ansible_ssh_user": "ubuntu",  # Set SSH user to 'ubuntu'
-                "ansible_ssh_private_key_file": "/var/lib/jenkins/.ssh/finance.pem"  # Specify your private key path
+                "ansible_ssh_private_key_file": "/var/lib/jenkins/.ssh/finance.pem"  # Specify your private key
             }
         },
         "_meta": {
@@ -18,7 +18,7 @@ def main():
                 "54.198.212.8": {
                     "ansible_host": "54.198.212.8",
                     "ansible_ssh_user": "ubuntu",  # Ensure this is also set here
-                    "ansible_ssh_private_key_file": "/var/lib/jenkins/.ssh/finance.pem"  # Specify your private key path here too
+                    "ansible_ssh_private_key_file": "/var/lib/jenkins/.ssh/finance.pem"  # Specify your private key here too
                 }
             }
         }
