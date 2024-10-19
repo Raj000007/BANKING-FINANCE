@@ -1,14 +1,26 @@
 - hosts: all
   become: true
-  tasks: 
+  tasks:
     - name: Update apt package index
       apt:
         update_cache: yes
 
-    - name: Install Docker
-      apt:
-        name: docker.io
-        state: present
+    - name: Install Docker using a shell script
+      shell: |
+        apt update &&
+        apt install -y \
+          apt-transport-https \
+          ca-certificates \
+          curl \
+          software-properties-common &&
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - &&
+        add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" &&
+        apt update &&
+        apt install -y docker-ce &&
+        systemctl start docker &&
+        systemctl enable docker
+      args:
+        executable: /bin/bash
 
     - name: Start Docker service
       systemd:
