@@ -12,9 +12,6 @@ def main():
         'test': {
             'hosts': [tf_output['test_server_ip']['value']],
         },
-        'production': {
-            'hosts': [tf_output['prod_server_ip']['value']],
-        },
     }
 
     # Print the inventory in the required format
