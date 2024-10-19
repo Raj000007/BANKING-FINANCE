@@ -1,23 +1,32 @@
----
-- hosts: test
-  become: yes  # Use sudo for the tasks
-  tasks:
+- hosts: all
+  become: true
+  tasks: 
     - name: Update apt package index
-      command: apt-get update
+      apt:
+        update_cache: yes
 
     - name: Install Docker
-      command: apt-get install -y docker.io
+      apt:
+        name: docker.io
+        state: present
 
     - name: Start Docker service
-      service:
+      systemd:
         name: docker
         state: started
-        enabled: yes  # Ensure Docker starts on boot
+        enabled: yes
 
     - name: Pull Docker image
-      command: docker pull rajesh159951/finance:latest
-      ignore_errors: yes  # Ignore errors if the image is already present
+      docker_image:
+        name: "rajesh159951/finance:{{ build_id }}"
+        pull: yes
+      vars:
+        build_id: "{{ lookup('env', 'BUILD_ID') }}"  # Gets the BUILD_ID from the environment
 
     - name: Run Docker container
-      command: docker run -d --name finance -p 8080:8080 rajesh159951/finance:latest
-      ignore_errors: yes  # Ignore errors if the container is already running
+      docker_container:
+        name: finance
+        image: "rajesh159951/finance:{{ build_id }}"
+        state: started
+        ports:
+          - "8080:8080"
