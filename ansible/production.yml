@@ -1,19 +1,52 @@
-- hosts: production
+---
+- name: Install Docker and run a container on Ubuntu
+  hosts: all
+  become: yes
+  vars:
+    build_id: "{{ lookup('env', 'BUILD_ID') }}"  # Gets the BUILD_ID from the environment
+
   tasks:
-    - name: Update apt repository and install Docker
+    - name: Update apt package index
       apt:
         update_cache: yes
-        name: docker.io
+
+    - name: Install necessary packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - python3-pip  # Ensure pip is installed
         state: present
 
-    - name: Start and enable Docker
+    - name: Add Docker’s official GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable"
+        state: present
+
+    - name: Update apt package index again
+      apt:
+        update_cache: yes
+
+    - name: Install Docker
+      apt:
+        name: docker-ce
+        state: latest
+
+    - name: Ensure Docker service is started and enabled
       systemd:
         name: docker
         state: started
         enabled: yes
 
-    - name: Add user to Docker group
-      user:
-        name: ubuntu
-        group: docker
-        append: yes
+    - name: Install Docker SDK for Python
+      pip:
+        name: docker
+        state: present
+        executable: pip3  # Make sure you're using Python 3
