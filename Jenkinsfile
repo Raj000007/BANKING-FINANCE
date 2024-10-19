@@ -76,7 +76,7 @@ pipeline {
                     // Manually retrieve the test server IP address
                     def serverIp = "54.198.212.8"  // Test server IP
                     // Deploy Docker image to the test server
-                    sh "ssh -o StrictHostKeyChecking=no ubuntu@${serverIp} 'docker run -d -p 8080:8080 ${DOCKER_IMAGE}'"
+                    sh "ssh -o StrictHostKeyChecking=no ubuntu@${serverIp} 'docker run -d -p 8822:8080 ${DOCKER_IMAGE}'"
                 }
             }
         }
