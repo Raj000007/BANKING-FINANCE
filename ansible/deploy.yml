@@ -3,36 +3,10 @@
   become: yes  # Use sudo for the tasks
   tasks:
     - name: Update apt package index
-      apt:
-        update_cache: yes
+      command: apt-get update
 
-    - name: Install required packages
-      apt:
-        name:
-          - apt-transport-https
-          - ca-certificates
-          - curl
-          - software-properties-common
-        state: present
-
-    - name: Add Docker’s official GPG key
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        state: present
-
-    - name: Add Docker APT repository
-      apt_repository:
-        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
-        state: present
-
-    - name: Update apt package index again
-      apt:
-        update_cache: yes
-
-    - name: Ensure Docker is installed
-      apt:
-        name: docker-ce  # Use 'docker-ce' for the official Docker package
-        state: present
+    - name: Install Docker
+      command: apt-get install -y docker.io
 
     - name: Start Docker service
       service:
@@ -40,11 +14,10 @@
         state: started
         enabled: yes  # Ensure Docker starts on boot
 
+    - name: Pull Docker image
+      command: docker pull rajesh159951/finance:latest
+      ignore_errors: yes  # Ignore errors if the image is already present
+
     - name: Run Docker container
-      docker_container:
-        name: finance
-        image: rajesh159951/finance:latest
-        state: started
-        ports:
-          - "8080:8080"
-        restart_policy: unless-stopped  # Ensure the container restarts unless stopped
+      command: docker run -d --name finance -p 8080:8080 rajesh159951/finance:latest
+      ignore_errors: yes  # Ignore errors if the container is already running
