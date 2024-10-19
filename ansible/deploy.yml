@@ -1,9 +1,44 @@
+---
 - hosts: test
+  become: yes  # Use sudo for the tasks
   tasks:
+    - name: Update apt package index
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+
+    - name: Add Docker’s official GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker APT repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Update apt package index again
+      apt:
+        update_cache: yes
+
     - name: Ensure Docker is installed
       apt:
-        name: docker.io
+        name: docker-ce  # Use 'docker-ce' for the official Docker package
         state: present
+
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes  # Ensure Docker starts on boot
 
     - name: Run Docker container
       docker_container:
@@ -12,3 +47,4 @@
         state: started
         ports:
           - "8080:8080"
+        restart_policy: unless-stopped  # Ensure the container restarts unless stopped
