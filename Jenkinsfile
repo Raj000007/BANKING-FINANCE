@@ -80,20 +80,6 @@ pipeline {
                 }
             }
         }
-        stage('Promote to Production') {
-            steps {
-                input message: 'Deploy to Production?', ok: 'Yes, deploy!'
-                script {
-                    dir(ANSIBLE_DIR) {
-                        // Run Ansible playbook for production
-                        sh 'ansible-playbook -i dynamic_inventory.py production.yml'
-                    }
-                    // Manually retrieve the production server IP address
-                    def prodIp = "54.237.251.49"  // Production server IP
-                    // Deploy Docker image to the production server
-                    sh "ssh -o StrictHostKeyChecking=no ubuntu@${prodIp} 'docker run -d -p 8080:8080 ${DOCKER_IMAGE}'"
-                }
-            }
-        }
+       
     }
 }
