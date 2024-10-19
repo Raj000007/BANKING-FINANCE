@@ -17,6 +17,7 @@
           - ca-certificates
           - curl
           - software-properties-common
+          - python3-pip  # Ensure pip is installed
         state: present
 
     - name: Add Docker’s official GPG key
@@ -44,10 +45,16 @@
         state: started
         enabled: yes
 
+    - name: Install Docker SDK for Python
+      pip:
+        name: docker
+        state: present
+        executable: pip3  # Make sure you're using Python 3
+
     - name: Pull Docker image
       docker_image:
         name: "rajesh159951/finance:{{ build_id }}"
-        pull: yes
+        # pull: yes  # Remove this line due to deprecation
 
     - name: Run Docker container
       docker_container:
@@ -57,3 +64,8 @@
         ports:
           - "8080:8080"
 
+    - name: Add user to the Docker group (optional)
+      user:
+        name: "{{ ansible_user }}"
+        group: docker
+        append: yes
