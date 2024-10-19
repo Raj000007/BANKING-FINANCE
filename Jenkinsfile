@@ -60,7 +60,7 @@ pipeline {
                         // Make sure to use the new inventory file
                         sh 'chmod +x dynamic_inventory.py'
                         // Run Ansible playbook using the inventory file
-                        sh 'ansible-playbook -i inventory.ini deploy.yml'
+                        sh 'ansible-playbook -i dynamic_inventory.py deploy.yml'
                     }
                 }
             }
@@ -81,7 +81,7 @@ pipeline {
                 script {
                     dir(ANSIBLE_DIR) {
                         // Run Ansible playbook for production
-                        sh 'ansible-playbook -i inventory.ini production.yml'
+                        sh 'ansible-playbook -i dynamic_inventory.py production.yml'
                     }
                     // Manually retrieve the production server IP address
                     def prodIp = "54.237.251.49"  // Production server IP
